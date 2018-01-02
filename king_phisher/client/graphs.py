@@ -568,8 +568,8 @@ class CampaignGraphVisitorInfo(CampaignBarGraph):
 		operating_systems = collections.Counter()
 		for visit in visits:
 			user_agent = None
-			if visit.visitor_details:
-				user_agent = ua_parser.parse_user_agent(visit.visitor_details)
+			if visit.user_agent:
+				user_agent = ua_parser.parse_user_agent(visit.user_agent)
 			operating_systems.update([user_agent.os_name if user_agent and user_agent.os_name else 'Unknown OS'])
 
 		os_names = sorted(operating_systems.keys())
@@ -591,7 +591,7 @@ class CampaignGraphVisitorInfoPie(CampaignPieGraph):
 
 		operating_systems = collections.Counter()
 		for visit in visits:
-			ua = ua_parser.parse_user_agent(visit.visitor_details)
+			ua = ua_parser.parse_user_agent(visit.user_agent)
 			operating_systems.update([ua.os_name or 'Unknown OS' if ua else 'Unknown OS'])
 		(os_names, count) = tuple(zip(*reversed(sorted(operating_systems.items(), key=lambda item: item[1]))))
 		self.graph_pie(count, labels=tuple("{0:,}".format(os) for os in count), legend_labels=os_names)
@@ -610,7 +610,7 @@ class CampaignGraphVisitsTimeline(CampaignLineGraph):
 		color_line_bg = self.get_color('line_bg', ColorHexCode.WHITE)
 		color_line_fg = self.get_color('line_fg', ColorHexCode.BLACK)
 		visits = info_cache['visits']
-		first_visits = [utilities.datetime_utc_to_local(visit.first_visit) for visit in visits]
+		first_seen_timestamps = [utilities.datetime_utc_to_local(visit.first_seen) for visit in visits]
 
 		ax = self.axes[0]
 		ax.tick_params(
@@ -624,15 +624,15 @@ class CampaignGraphVisitsTimeline(CampaignLineGraph):
 		ax.set_ylabel('Number of Visits', color=self.get_color('fg', ColorHexCode.WHITE), size=10)
 		self._ax_hide_ticks(ax)
 		self._ax_set_spine_color(ax, color_bg)
-		if not len(first_visits):
+		if not len(first_seen_timestamps):
 			ax.set_yticks((0,))
 			ax.set_xticks((0,))
 			return
 
-		first_visits.sort()
+		first_seen_timestamps.sort()
 		ax.plot_date(
-			first_visits,
-			range(1, len(first_visits) + 1),
+			first_seen_timestamps,
+			range(1, len(first_seen_timestamps) + 1),
 			'-',
 			color=color_line_fg,
 			linewidth=6
@@ -685,7 +685,7 @@ class CampaignGraphVisitsMap(CampaignGraph):
 	def _load_graph(self, info_cache):
 		visits = unique(info_cache['visits'], key=lambda visit: visit.message_id)
 		cred_ips = set(cred.message_id for cred in info_cache['credentials'])
-		cred_ips = set([visit.visitor_ip for visit in visits if visit.message_id in cred_ips])
+		cred_ips = set([visit.ip for visit in visits if visit.ip and visit.message_id in cred_ips])
 
 		color_fg = self.get_color('fg', ColorHexCode.BLACK)
 		color_land = self.get_color('map_land', ColorHexCode.GRAY)
@@ -718,7 +718,7 @@ class CampaignGraphVisitsMap(CampaignGraph):
 			return
 
 		ctr = collections.Counter()
-		ctr.update([visit.visitor_ip for visit in visits])
+		ctr.update([visit.ip for visit in visits if visit.ip])
 
 		base_markersize = self.markersize_scale
 		base_markersize = max(base_markersize, 3.05)
@@ -742,8 +742,8 @@ class CampaignGraphVisitsMap(CampaignGraph):
 		return geo_locations
 
 	def _plot_visitor_map_points(self, bm, ctr, base_markersize, cred_ips):
-		o_high = float(max(ctr.values()))
-		o_low = float(min(ctr.values()))
+		o_high = float(max(ctr.values())) if ctr else 0.0
+		o_low = float(min(ctr.values())) if ctr else 0.0
 		color_with_creds = self.color_with_creds
 		color_without_creds = self.color_without_creds
 		geo_locations = self._resolve_geolocations(ctr.keys())

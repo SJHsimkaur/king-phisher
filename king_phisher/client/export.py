@@ -199,16 +199,16 @@ def campaign_visits_to_geojson(rpc, campaign_id, geojson_file):
 	ips_for_georesolution = {}
 	ip_counter = collections.Counter()
 	for visit in rpc.remote_table('visits', query_filter={'campaign_id': campaign_id}):
-		ip_counter.update((visit.visitor_ip,))
-		visitor_ip = ipaddress.ip_address(visit.visitor_ip)
+		visitor_ip = ipaddress.ip_address(visit.ip)
+		ip_counter.update((visitor_ip,))
 		if not isinstance(visitor_ip, ipaddress.IPv4Address):
 			continue
 		if visitor_ip.is_loopback or visitor_ip.is_private:
 			continue
-		if not visitor_ip in ips_for_georesolution:
-			ips_for_georesolution[visitor_ip] = visit.first_visit
-		elif ips_for_georesolution[visitor_ip] > visit.first_visit:
-			ips_for_georesolution[visitor_ip] = visit.first_visit
+		if visitor_ip not in ips_for_georesolution:
+			ips_for_georesolution[visitor_ip] = visit.first_seen
+		elif ips_for_georesolution[visitor_ip] > visit.first_seen:
+			ips_for_georesolution[visitor_ip] = visit.first_seen
 	ips_for_georesolution = [ip for (ip, _) in sorted(ips_for_georesolution.items(), key=lambda x: x[1])]
 	locations = {}
 	for ip_addresses in iterutils.chunked(ips_for_georesolution, 50):

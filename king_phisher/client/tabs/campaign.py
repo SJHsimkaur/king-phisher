@@ -356,13 +356,13 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 			node: deaddropConnection(id: $id) {
 				id
 				deaddropDeployment { destination }
-				visitCount
-				visitorIp
+				count
+				ip
 				localUsername
 				localHostname
 				localIpAddresses
-				firstVisit
-				lastVisit
+				firstSeen
+				lastSeen
 			}
 		}
 	}
@@ -377,13 +377,13 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 						node {
 							id
 							deaddropDeployment { destination }
-							visitCount
-							visitorIp
+							count
+							ip
 							localUsername
 							localHostname
 							localIpAddresses
-							firstVisit
-							lastVisit
+							firstSeen
+							lastSeen
 						}
 					}
 					pageInfo {
@@ -411,13 +411,13 @@ class CampaignViewDeaddropTab(CampaignViewGenericTableTab):
 			return None
 		row = (
 			deploy_details.destination,
-			connection.visit_count,
-			connection.visitor_ip,
+			connection.count,
+			connection.ip,
 			connection.local_username,
 			connection.local_hostname,
 			connection.local_ip_addresses,
-			connection.first_visit,
-			connection.last_visit
+			connection.first_seen,
+			connection.last_seen
 		)
 		return row
 
@@ -590,12 +590,12 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 			node: visit(id: $id) {
 				id
 				message { targetEmail }
-				visitorIp
-				visitCount
-				visitorDetails
+				ip
+				count
+				userAgent
 				visitorGeoloc { city }
-				firstVisit
-				lastVisit
+				firstSeen
+				lastSeen
 			}
 		}
 	}
@@ -610,12 +610,12 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 						node {
 							id
 							message { targetEmail }
-							visitorIp
-							visitCount
-							visitorDetails
+							ip
+							count
+							userAgent
 							visitorGeoloc { city }
-							firstVisit
-							lastVisit
+							firstSeen
+							lastSeen
 						}
 					}
 					pageInfo {
@@ -642,7 +642,7 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 	)
 	def format_node_data(self, node):
 		geo_location = UNKNOWN_LOCATION_STRING
-		visitor_ip = node['visitorIp']
+		visitor_ip = node['ip']
 		if visitor_ip is None:
 			visitor_ip = ''
 		else:
@@ -658,11 +658,11 @@ class CampaignViewVisitsTab(CampaignViewGenericTableTab):
 		row = (
 			node['message']['targetEmail'],
 			str(visitor_ip),
-			node['visitCount'],
-			node['visitorDetails'],
+			node['count'],
+			node['userAgent'],
 			geo_location,
-			node['firstVisit'],
-			node['lastVisit']
+			node['firstSeen'],
+			node['lastSeen']
 		)
 		return row
 
